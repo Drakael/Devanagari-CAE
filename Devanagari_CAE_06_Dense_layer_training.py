@@ -128,14 +128,18 @@ X_valid_original = X_valid
 y_train = to_categorical(y_train)
 y_valid_original = y_valid
 y_valid = to_categorical(y_valid)
+y_test_original = y_test
+y_test = to_categorical(y_test)
 
 if K.image_data_format() == 'channels_first':
     X_train = X_train.reshape(X_train.shape[0], nb_channels, img_rows, img_cols)
     X_valid = X_valid.reshape(X_valid.shape[0], nb_channels, img_rows, img_cols)
+    X_test = X_test.reshape(X_test.shape[0], nb_channels, img_rows, img_cols)
     input_shape = (64, 4, 4)
 else:
     X_train = X_train.reshape(X_train.shape[0], img_rows, img_cols, nb_channels)
     X_valid = X_valid.reshape(X_valid.shape[0], img_rows, img_cols, nb_channels)
+    X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols, nb_channels)
     input_shape = (4, 4, 64)
 
 model = Sequential()
@@ -165,6 +169,7 @@ encoded_test = np.array(df_encoded_test)
 encoded_test = encoded_test.reshape((len(df_encoded_test), ) + input_shape)
 del df_encoded_test
 
+
 batch_size = 32
 epochs = 2
 history = model.fit(encoded_train, y_train,
@@ -180,56 +185,37 @@ model.save(model_path)
 predictions = model.predict(encoded_test, batch_size, verbose=1)
 p('predictions', predictions)
 
-p('y_test', y_test)
+p('y_test_original', y_test_original)
 p('argmax predictions', np.argmax(predictions, axis=1))
 
 
 predicted_class = np.argmax(predictions, axis=1)
 p('predicted_class', predicted_class)
 
-mask = predicted_class != np.squeeze(y_test)
+mask = predicted_class != np.squeeze(y_test_original)
 p('mask', mask)
 
 p('X_test', X_test)
 wrong_guesses_images = X_test[mask]
 
-wrong_guesses_target = encoded_valid[mask]
+wrong_guesses_target = encoded_test[mask]
 
 wrong_guesses_predictions = predictions[mask]
 
 wrong_guesses_class = predicted_class[mask]
 
-good_labels = y_valid_original[mask]
+good_labels = y_test_original[mask]
 
 
 plot_gallery_2("Wrong guesses", wrong_guesses_images, image_shape,
                wrong_guesses_class, wrong_guesses_predictions, good_labels,
-               12, 12)
+               13, 13)
 
 plot_gallery_2("Wrong guesses target", wrong_guesses_target, image_shape,
                wrong_guesses_class, wrong_guesses_predictions, good_labels,
-               12, 12)
+               13, 13)
 
-score = model.evaluate(encoded_valid, y_valid, verbose=0)
+score = model.evaluate(encoded_test, y_test, verbose=1)
 
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
-
-weights = np.array(model.get_weights())
-for w in weights:
-    print(w.shape)
-
-cur_weights = weights[0]
-weight_map = np.moveaxis(cur_weights, [0, 1, 2, 3], [2, 3, 1, 0])
-weight_map = weight_map.reshape(-1, cur_weights.shape[0], cur_weights.shape[1])
-plot_gallery("conv1 weights", weight_map, (cur_weights.shape[0], cur_weights.shape[1]))
-
-cur_weights = weights[2]
-weight_map = np.moveaxis(cur_weights, [0, 1, 2, 3], [2, 3, 1, 0])
-weight_map = weight_map.reshape(-1, cur_weights.shape[0], cur_weights.shape[1])
-plot_gallery("conv2 weights", weight_map, (cur_weights.shape[0], cur_weights.shape[1]))
-
-cur_weights = weights[4]
-weight_map = np.moveaxis(cur_weights, [0, 1, 2, 3], [2, 3, 1, 0])
-weight_map = weight_map.reshape(-1, cur_weights.shape[0], cur_weights.shape[1])
-plot_gallery("conv3 weights", weight_map, (cur_weights.shape[0], cur_weights.shape[1]))

@@ -15,11 +15,11 @@ image_border = 32
 image_shape = (image_border, image_border)
 img_rows, img_cols = image_shape
 
-X = pd.read_csv('nepali_images_train.csv', header=None)
-y = pd.read_csv('nepali_labels_train.csv', header=None)
-X_test = pd.read_csv('nepali_images_test.csv', header=None)
-y_test = pd.read_csv('nepali_labels_test.csv', header=None)
-models = pd.read_csv('nepali_models.csv', header=None)
+X = pd.read_csv('Devanagari_images_train.csv', header=None)
+y = pd.read_csv('Devanagari_labels_train.csv', header=None)
+X_test = pd.read_csv('Devanagari_images_test.csv', header=None)
+y_test = pd.read_csv('Devanagari_labels_test.csv', header=None)
+models = pd.read_csv('Devanagari_models.csv', header=None)
 
 X = np.array(X).reshape(len(X), len(X.columns))
 y = np.array(y).reshape(len(y), len(y.columns))
@@ -27,9 +27,12 @@ X_test = np.array(X_test).reshape(len(X_test), len(X_test.columns))
 y_test = np.array(y_test).reshape(len(y_test), len(y_test.columns))
 models = np.array(models).reshape(len(models), len(models.columns))
 
-X = X.astype('float32') / 255.
-X_test = X_test.astype('float32') / 255.
-models = models.astype('float32') / 255.
+X = X / 255.
+X_test = X_test / 255.
+models = models / 255.
+X = X.astype('float32')
+X_test = X_test.astype('float32')
+models = models.astype('float32')
 X = np.reshape(X, (len(X), image_border, image_border, 1))
 X_test = np.reshape(X_test, (len(X_test), image_border, image_border, 1))
 models = np.reshape(models, (len(models), image_border, image_border, 1))
@@ -55,6 +58,10 @@ for i, y in enumerate(y_test):
 models_test = arr
 
 del arr
+
+models_train = models_train.astype('float32')
+models_valid = models_valid.astype('float32')
+models_test = models_test.astype('float32')
 
 
 def train_model():
@@ -82,7 +89,8 @@ def train_model():
 
     autoencoder = Model(input_img, decoded)
     autoencoder.summary()
-    autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+    autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy',
+                        metrics=['accuracy'])
     autoencoder.fit(X_train, models_train,
                     epochs=10,
                     batch_size=32,

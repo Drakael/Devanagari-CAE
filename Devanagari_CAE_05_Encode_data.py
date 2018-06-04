@@ -78,10 +78,12 @@ y_valid = to_categorical(y_valid)
 if K.image_data_format() == 'channels_first':
     X_train = X_train.reshape(X_train.shape[0], nb_channels, img_rows, img_cols)
     X_valid = X_valid.reshape(X_valid.shape[0], nb_channels, img_rows, img_cols)
+    X_test = X_test.reshape(X_test.shape[0], nb_channels, img_rows, img_cols)
     input_shape = (nb_channels, img_rows, img_cols)
 else:
     X_train = X_train.reshape(X_train.shape[0], img_rows, img_cols, nb_channels)
     X_valid = X_valid.reshape(X_valid.shape[0], img_rows, img_cols, nb_channels)
+    X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols, nb_channels)
     input_shape = (img_rows, img_cols, nb_channels)
 
 
