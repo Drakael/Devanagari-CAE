@@ -8,7 +8,7 @@ Created on 2018-06-04
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D
+from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Dropout, BatchNormalization
 from keras.models import Model
 
 image_border = 32
@@ -68,23 +68,36 @@ def train_model():
     input_img = Input(shape=(image_border, image_border, 1))
     # layer shape 32 x 32
     x = Conv2D(64, (9, 9), activation='relu', padding='same')(input_img)
+    x = BatchNormalization()(x)
+    x = Conv2D(64, (9, 9), activation='relu', padding='same')(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.3)(x)
     # layer shape 16 x 16
     x = Conv2D(64, (9, 9), activation='relu', padding='same')(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.3)(x)
     # layer shape 8 x 8
     x = Conv2D(64, (7, 7), activation='relu', padding='same')(x)
-    encoded = MaxPooling2D((2, 2), padding='same', name='encoder')(x)
+    x = MaxPooling2D((2, 2), padding='same')(x)
+    encoded = BatchNormalization(name='encoder')(x)
     # layer shape 4 x 4
-    # at this point the representation is (4, 4, 64) i.e. 572-dimensional
+    # at this point the representation is (4, 4, 64) i.e. 1024-dimensional
     x = UpSampling2D((2, 2))(encoded)
     # layer shape 8 x 8
     x = Conv2D(64, (7, 7), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    # x = Dropout(0.25)(x)
     x = UpSampling2D((2, 2))(x)
     # layer shape 16 x 16
     x = Conv2D(64, (9, 9), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    # x = Dropout(0.2)(x)
     x = UpSampling2D((2, 2))(x)
     # layer shape 32 x 32
+    x = Conv2D(64, (9, 9), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
     decoded = Conv2D(1, (9, 9), activation='sigmoid', padding='same')(x)
 
     autoencoder = Model(input_img, decoded)
@@ -93,7 +106,7 @@ def train_model():
                         metrics=['accuracy'])
     autoencoder.fit(X_train, models_train,
                     epochs=10,
-                    batch_size=32,
+                    batch_size=16,
                     shuffle=True,
                     verbose=1,
                     validation_data=(X_valid, models_valid))
